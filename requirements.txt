@@ -1,0 +1,13 @@
+# python==3.12.11
+accelerate
+bitsandbytes
+datasets
+flash-attn==2.8.3
+google-genai
+matplotlib
+peft
+pyarrow==20.0.0
+torch==2.5.1  # 2.5.1+cu121
+trl
+tqdm
+transformers
