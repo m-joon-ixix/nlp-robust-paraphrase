@@ -10,6 +10,7 @@ from common.const import Dataset
 from common.model_utils import ModelFamily, get_model_family, MODEL_TO_RPD_LIMIT
 from common.string_utils import load_instruction
 from common.json_utils import load_from_json, dump_to_json
+from common.slack_utils import slack_notify
 
 CHUNK_SIZE = 500
 
@@ -51,6 +52,11 @@ def main(args):
         run_chunk(data_list, args, filepath)
 
     merge_chunks(args.dataset, list(range(last_chunk_num + 1)))
+    slack_notify(
+        "Finished paraphrasing questions.",
+        dataset=args.dataset.value,
+        model=args.model_name,
+    )
 
 
 def run_chunk(data_list, args, filepath):
