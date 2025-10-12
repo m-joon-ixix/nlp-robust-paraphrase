@@ -10,6 +10,7 @@ from common.const import FAILED_TOKEN, PROHIBITED_CONTENT_TOKEN
 from common.model_utils import ModelFamily, get_model_family
 from common.random_utils import get_seed
 from common.secret_utils import load_secret
+from common.slack_utils import slack_notify
 
 RETRY_INTERVAL = 3
 
@@ -42,7 +43,7 @@ def query_api(query, model_name: str, max_tokens: int, temperature: float) -> st
 
 
 def _query_gemini(query, model_name: str, max_tokens: int, temperature: float) -> str:
-    api_keys = _get_api_keys(get_model_family(model_name))
+    api_keys = get_api_keys(get_model_family(model_name))
     # rotate multiple API keys to avoid the rate limit error
     clients = [genai.Client(api_key=api_key) for api_key in api_keys]
     client_idx = random.randint(0, len(clients) - 1)
@@ -139,9 +140,45 @@ def _handle_gemini_429_error(e: Exception):
     time.sleep(RETRY_INTERVAL)
 
 
-def _get_api_keys(model_family: ModelFamily) -> List[str]:
+def get_api_keys(model_family: ModelFamily) -> List[str]:
     api_keys = load_secret("api_keys", print_log=False)[model_family.value]
     if len(api_keys) == 0:
         raise AssertionError(f"No API keys found for {model_family.value}")
 
     return api_keys
+
+
+def check_generate_failure(
+    responses: List[str], model_name: str, output_path: str, required_str=None
+):
+    failed_indices = []
+    prohibited_content_indices = []
+    required_str_not_found_indices = []
+
+    for idx, response in enumerate(responses):
+        if response == FAILED_TOKEN:
+            failed_indices.append(idx)
+        elif response == PROHIBITED_CONTENT_TOKEN:
+            prohibited_content_indices.append(idx)
+        elif required_str is not None and required_str not in response:
+            required_str_not_found_indices.append(idx)
+
+    notify_params = {"output_path": output_path, "model_name": model_name}
+
+    if len(failed_indices) > 0:
+        slack_notify(
+            f"Failed to generate for examples at these indices: {failed_indices}",
+            **notify_params,
+        )
+
+    if len(prohibited_content_indices) > 0:
+        slack_notify(
+            f"Generate request was blocked due to PROHIBITED_CONTENT for examples at these indices: {prohibited_content_indices}",
+            **notify_params,
+        )
+
+    if len(required_str_not_found_indices) > 0:
+        slack_notify(
+            f"Required string '{required_str}' not found for examples at these indices: {required_str_not_found_indices}",
+            **notify_params,
+        )

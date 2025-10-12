@@ -1,10 +1,18 @@
 import os
+from enum import Enum
 
 ## Paths
 DATASET_CACHE_DIR = os.path.expanduser("~/hf/datasets")
 MODEL_CACHE_DIR = os.path.expanduser("~/hf/hub")
 
-DATASETS = []  # FIXME
+
+## Enums
+class Dataset(Enum):
+    MMLU = "mmlu"
+    ARC = "arc"
+    COMMONSENSE_QA = "commonsense_qa"
+    MATH_QA = "math_qa"
+
 
 ## Indexing
 IDX_TO_LETTER = [

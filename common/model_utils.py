@@ -9,6 +9,12 @@ class ModelFamily(Enum):
     LLAMA = "llama"
 
 
+# RPD: Requests Per Day
+MODEL_TO_RPD_LIMIT = {
+    "gemini-2.5-flash-lite": 1000,
+}
+
+
 def get_model_family(model_name: str) -> ModelFamily:
     if any([exp in model_name.lower() for exp in ["gpt", "o1", "o3", "o4"]]):
         return ModelFamily.OPENAI

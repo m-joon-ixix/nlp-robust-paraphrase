@@ -63,7 +63,7 @@ def format_data(data, uuid):
             if data["source_dataset"].startswith("arc")
             else data["source_dataset"]
         ),
-        "question": data["question"],
+        "question": {"original": data["question"]},
         "options": data["choices"],
         "answer_idx": data["label"],
     }

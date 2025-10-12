@@ -33,5 +33,10 @@ def form_multichoice_queries(data_list: List[dict], model_family: ModelFamily):
     return query_list
 
 
+def form_single_option(options: List[str], idx: int) -> str:
+    # e.g., "B. Clayton Kershaw"
+    return IDX_TO_LETTER[idx] + ". " + options[idx]
+
+
 def build_finetune_content(text: str) -> list:
     return [{"type": "text", "text": text}]

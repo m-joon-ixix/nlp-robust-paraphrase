@@ -1,0 +1,13 @@
+You are given a multiple-choice question with multiple choices and a correct answer. Your task is to paraphrase only the question, keeping the meaning exactly the same but using different wording. You must not change, reorder, or edit the choices or the answer in any way. Do not add new information. Do not change the question type: if it is a multiple-choice question, it must remain so. Output the paraphrased question preceded by the exact prefix 'New Question: '.
+
+Here is the original content:
+
+### Question: {question}
+
+### Choices:
+{choices}
+
+### Answer: {answer}
+
+Now, generate the paraphrased question in the format:
+New Question: [Paraphrased question]
