@@ -35,23 +35,31 @@ def batch_query_api(
 ) -> List[str]:
     print_prompt_example(query_list[0], model_name)
 
-    return [
-        query_api(
-            query,
-            model_name,
-            max_new_tokens,
-            temperature,
-        )
+    kwargs = {}
+    if get_model_family(model_name) == ModelFamily.SNOWFLAKE:
+        kwargs["snowflake_session"] = _get_snowflake_session()
+
+    responses = [
+        query_api(query, model_name, max_new_tokens, temperature, **kwargs)
         for query in tqdm(query_list, desc=f"Querying {model_name} API")
     ]
 
+    if "snowflake_session" in kwargs:
+        kwargs["snowflake_session"].close()
 
-def query_api(query, model_name: str, max_tokens: int, temperature: float) -> str:
+    return responses
+
+
+def query_api(
+    query, model_name: str, max_tokens: int, temperature: float, **kwargs
+) -> str:
     model_family = get_model_family(model_name)
     if model_family == ModelFamily.GEMINI:
         return _query_gemini(query, model_name, max_tokens, temperature)
     elif model_family == ModelFamily.SNOWFLAKE:
-        return _query_snowflake(query, model_name, max_tokens, temperature)
+        return _query_snowflake(
+            query, model_name, max_tokens, temperature, kwargs["snowflake_session"]
+        )
     else:
         raise NotImplementedError()
 
@@ -106,14 +114,8 @@ def _query_gemini(query, model_name: str, max_tokens: int, temperature: float) -
 
 
 def _query_snowflake(
-    query, model_name: str, max_tokens: int, temperature: float
+    query, model_name: str, max_tokens: int, temperature: float, session: Session
 ) -> str:
-    snowflake_config = load_secret("snowflake", print_log=False)
-    connection_params = {}
-    for key in SNOWFLAKE_CONFIG_KEYS:
-        connection_params[key] = snowflake_config.get(key, "")
-
-    session = Session.builder.configs(connection_params).create()
     response = complete(
         model=model_name,
         prompt=query,
@@ -121,7 +123,7 @@ def _query_snowflake(
         session=session,
     )
 
-    session.close()
+    time.sleep(1)  # sleep to not impose high throughput
     return response
 
 
@@ -182,6 +184,15 @@ def get_api_keys(model_family: ModelFamily) -> List[str]:
         raise AssertionError(f"No API keys found for {model_family.value}")
 
     return api_keys
+
+
+def _get_snowflake_session() -> Session:
+    snowflake_config = load_secret("snowflake", print_log=False)
+    connection_params = {}
+    for key in SNOWFLAKE_CONFIG_KEYS:
+        connection_params[key] = snowflake_config.get(key, "")
+
+    return Session.builder.configs(connection_params).create()
 
 
 def check_generate_failure(
