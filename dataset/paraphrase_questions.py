@@ -37,7 +37,6 @@ def main(args):
     api_usage_limit = daily_api_usage_limit(args.model_name)
     for chunk_num in range(start_chunk_num, last_chunk_num + 1):
         if get_api_usage_today(args.model_name) + CHUNK_SIZE > api_usage_limit:
-            print("API request limit expected to exceed. Waiting until tmr.", end="")
             wait_until_tomorrow()
 
         filepath = output_filepath(args.dataset, chunk_num)
@@ -176,10 +175,16 @@ def increment_api_usage_today(model_name: str, count: int):
 
 
 def wait_until_tomorrow():
+    print(
+        "Daily API request limit expected to exceed. Waiting until tomorrow.",
+        end="",
+        flush=True,
+    )
+
     today = strftoday()
     while strftoday() == today:
         sleep(60 * 20)  # 20 mins
-        print(".", end="")
+        print(".", end="", flush=True)
 
     print("\nWaiting done. Resuming API calls.")
 
