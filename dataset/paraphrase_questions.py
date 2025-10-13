@@ -31,7 +31,7 @@ def main(args):
         return
 
     print(
-        f"Dataset: {args.dataset.value} (len: {len(origin_data_list)}), Chunk Numbers to run: {start_chunk_num}-{last_chunk_num}"
+        f"Dataset: {args.dataset.value} (len: {len(origin_data_list)}), Model: {args.model_name}, Chunk Numbers to run: {start_chunk_num}-{last_chunk_num}"
     )
 
     api_usage_limit = daily_api_usage_limit(args.model_name)
@@ -87,8 +87,13 @@ def merge_chunks(dataset: Dataset, chunk_nums: list):
 
 def build_query_list(data_list: list, model_family: ModelFamily) -> list:
     instruction_template = load_instruction("paraphrase_question")
-    query_list = []
+    system_prompt = (
+        load_instruction("paraphrase_question_system")
+        if model_family == ModelFamily.SNOWFLAKE
+        else None
+    )
 
+    query_list = []
     for data in tqdm(data_list, desc="Building queries to paraphrase questions"):
         instruction = instruction_template.format(
             question=data["question"]["original"],
@@ -101,7 +106,9 @@ def build_query_list(data_list: list, model_family: ModelFamily) -> list:
             answer=form_single_option(data["options"], data["answer_idx"]),
         )
 
-        query_list.append(form_query(instruction, model_family))
+        query_list.append(
+            form_query(instruction, model_family, system_prompt=system_prompt)
+        )
 
     return query_list
 
@@ -132,12 +139,14 @@ def output_filepath(dataset: Dataset, chunk_num: int) -> str:
 
 
 def daily_api_usage_limit(model_name: str) -> int:
+    model_family = get_model_family(model_name)
+
+    limit = MODEL_TO_RPD_LIMIT[model_name]
+    if model_family != ModelFamily.SNOWFLAKE:
+        limit *= len(get_api_keys(model_family))
+
     # 95% of the official RPD used as limit, to leave some space for unexpected extra requests
-    return (
-        MODEL_TO_RPD_LIMIT[model_name]
-        * len(get_api_keys(get_model_family(model_name)))
-        * 0.95
-    )
+    return int(limit * 0.95)
 
 
 def get_api_usage_today(model_name: str) -> int:

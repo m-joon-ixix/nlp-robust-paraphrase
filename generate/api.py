@@ -5,6 +5,8 @@ from tqdm import tqdm
 from google import genai
 from google.genai.types import GenerateContentConfig
 from google.genai.errors import APIError
+from snowflake.snowpark import Session
+from snowflake.cortex import complete
 
 from common.const import FAILED_TOKEN, PROHIBITED_CONTENT_TOKEN
 from common.model_utils import ModelFamily, get_model_family
@@ -13,6 +15,16 @@ from common.secret_utils import load_secret
 from common.slack_utils import slack_notify
 
 RETRY_INTERVAL = 3
+
+SNOWFLAKE_CONFIG_KEYS = [
+    "account",
+    "user",
+    "password",
+    "role",
+    "database",
+    "schema",
+    "warehouse",
+]
 
 
 def batch_query_api(
@@ -38,6 +50,8 @@ def query_api(query, model_name: str, max_tokens: int, temperature: float) -> st
     model_family = get_model_family(model_name)
     if model_family == ModelFamily.GEMINI:
         return _query_gemini(query, model_name, max_tokens, temperature)
+    elif model_family == ModelFamily.SNOWFLAKE:
+        return _query_snowflake(query, model_name, max_tokens, temperature)
     else:
         raise NotImplementedError()
 
@@ -91,6 +105,26 @@ def _query_gemini(query, model_name: str, max_tokens: int, temperature: float) -
     return FAILED_TOKEN
 
 
+def _query_snowflake(
+    query, model_name: str, max_tokens: int, temperature: float
+) -> str:
+    snowflake_config = load_secret("snowflake", print_log=False)
+    connection_params = {}
+    for key in SNOWFLAKE_CONFIG_KEYS:
+        connection_params[key] = snowflake_config.get(key, "")
+
+    session = Session.builder.configs(connection_params).create()
+    response = complete(
+        model=model_name,
+        prompt=query,
+        options={"max_tokens": max_tokens, "temperature": temperature},
+        session=session,
+    )
+
+    session.close()
+    return response
+
+
 def print_prompt_example(prompt, model_name: str):
     print(f"An example of prompt:")
     print("-" * 100)
@@ -101,6 +135,8 @@ def print_prompt_example(prompt, model_name: str):
         print(prompt[0]["content"][0]["text"])
     elif model_family == ModelFamily.GEMINI:
         print(prompt[0]["parts"][0]["text"])
+    elif model_family == ModelFamily.SNOWFLAKE:
+        print(f"# System\n{prompt[0]['content']}\n\n# User\n{prompt[1]['content']}")
     else:
         print(
             f"Warning from print_prompt_example() - Unexpected model name: {model_name}"

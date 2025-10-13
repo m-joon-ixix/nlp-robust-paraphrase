@@ -5,16 +5,19 @@ from common.const import IDX_TO_LETTER
 from common.model_utils import ModelFamily
 
 
-def form_query(text: str, model_family: ModelFamily):
+def form_query(user_prompt: str, model_family: ModelFamily, system_prompt: str = None):
     if model_family == ModelFamily.OPENAI:
-        message = {"role": "user", "content": [{"type": "text", "text": text}]}
+        return [{"role": "user", "content": [{"type": "text", "text": user_prompt}]}]
     elif model_family == ModelFamily.GEMINI:
-        message = {"role": "user", "parts": [{"text": text}]}
+        return [{"role": "user", "parts": [{"text": user_prompt}]}]
+    elif model_family == ModelFamily.SNOWFLAKE:
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
     else:
         # Open Source
-        message = {"role": "user", "content": [{"type": "text", "text": text}]}
-
-    return [message]
+        return [{"role": "user", "content": [{"type": "text", "text": user_prompt}]}]
 
 
 def form_multichoice_queries(data_list: List[dict], model_family: ModelFamily):
