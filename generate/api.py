@@ -70,7 +70,7 @@ def _query_gemini(query, model_name: str, max_tokens: int, temperature: float) -
     clients = [genai.Client(api_key=api_key) for api_key in api_keys]
     client_idx = random.randint(0, len(clients) - 1)
 
-    retry_count = 10
+    retry_count = max(len(clients), 3)
     for _ in range(retry_count):
         try:
             client = clients[client_idx]
@@ -116,15 +116,24 @@ def _query_gemini(query, model_name: str, max_tokens: int, temperature: float) -
 def _query_snowflake(
     query, model_name: str, max_tokens: int, temperature: float, session: Session
 ) -> str:
-    response = complete(
-        model=model_name,
-        prompt=query,
-        options={"max_tokens": max_tokens, "temperature": temperature},
-        session=session,
-    )
+    retry_count = 3
+    for _ in range(retry_count):
+        try:
+            response = complete(
+                model=model_name,
+                prompt=query,
+                options={"max_tokens": max_tokens, "temperature": temperature},
+                session=session,
+            )
 
-    time.sleep(1)  # sleep to not impose high throughput
-    return response
+            time.sleep(1)  # sleep to not impose high throughput
+            return response
+        except Exception as e:
+            print(f"Retrying due to Error: ", e)
+            time.sleep(RETRY_INTERVAL)
+
+    # if reached to this stage, it means every trial has failed
+    return FAILED_TOKEN
 
 
 def print_prompt_example(prompt, model_name: str):
