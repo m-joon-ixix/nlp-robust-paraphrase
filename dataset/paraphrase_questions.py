@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from generate.api import batch_query_api, check_generate_failure, get_api_keys
 from generate.form_query import form_query, form_single_option
-from common.const import Dataset
+from common.const import Dataset, FAILED_TOKEN
 from common.model_utils import ModelFamily, get_model_family, MODEL_TO_RPD_LIMIT
 from common.string_utils import load_instruction
 from common.json_utils import load_from_json, dump_to_json
@@ -23,9 +23,14 @@ def main(args):
     origin_data_list = [
         data for data in origin_data_list if data["dataset"] == args.dataset.value
     ]
-    last_chunk_num = int((len(origin_data_list) - 1) / CHUNK_SIZE)  # inclusive
 
-    start_chunk_num = check_next_chunk(args)
+    if args.chunk_num:
+        start_chunk_num = args.chunk_num
+        last_chunk_num = args.chunk_num
+    else:
+        start_chunk_num = check_next_chunk(args)
+        last_chunk_num = int((len(origin_data_list) - 1) / CHUNK_SIZE)  # inclusive
+
     if start_chunk_num > last_chunk_num:
         print("Paraphrasing questions is finished. Terminating...")
         return
@@ -59,7 +64,16 @@ def main(args):
 
 
 def run_chunk(data_list, args, filepath):
-    query_list = build_query_list(data_list, get_model_family(args.model_name))
+    # NOTE: only query API for data examples that do not have the paraphrased question
+    original_idxs = [
+        i
+        for i, data in enumerate(data_list)
+        if not _paraphrased_question_exists(data, args.model_name)
+    ]
+
+    query_list = build_query_list(
+        [data_list[i] for i in original_idxs], get_model_family(args.model_name)
+    )
     responses = batch_query_api(query_list, args.model_name)
     increment_api_usage_today(args.model_name, len(query_list))
 
@@ -67,9 +81,9 @@ def run_chunk(data_list, args, filepath):
         responses, args.model_name, filepath, required_str="New Question:"
     )
 
-    for data, raw_response in zip(data_list, responses):
+    for i, raw_response in zip(original_idxs, responses):
         paraphrased_question = raw_response.split("New Question:")[-1].strip()
-        data["question"][args.model_name] = paraphrased_question
+        data_list[i]["question"][args.model_name] = paraphrased_question
 
     dump_to_json(filepath, data_list)
 
@@ -82,6 +96,11 @@ def merge_chunks(dataset: Dataset, chunk_nums: list):
         )
 
     dump_to_json(f"./output/dataset/{dataset.value}/paraphrased.json", data_list)
+
+
+def _paraphrased_question_exists(data: dict, model_name: str) -> bool:
+    result = data["question"].get(model_name)
+    return result is not None and len(result) > 0 and result != FAILED_TOKEN
 
 
 def build_query_list(data_list: list, model_family: ModelFamily) -> list:
@@ -199,6 +218,12 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=Dataset)
     parser.add_argument(
         "--model-name", type=str, choices=list(MODEL_TO_RPD_LIMIT.keys())
+    )
+    parser.add_argument(
+        "--chunk-num",
+        type=int,
+        required=False,
+        help="if given, only runs on that chunk",
     )
 
     args = parser.parse_args()
