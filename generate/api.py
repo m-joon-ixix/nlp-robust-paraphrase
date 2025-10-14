@@ -207,34 +207,24 @@ def _get_snowflake_session() -> Session:
 def check_generate_failure(
     responses: List[str], model_name: str, output_path: str, required_str=None
 ):
-    failed_indices = []
-    prohibited_content_indices = []
-    required_str_not_found_indices = []
+    failed_count = 0
+    prohibited_content_count = 0
+    required_str_not_found_count = 0
 
-    for idx, response in enumerate(responses):
+    for response in responses:
         if response == FAILED_TOKEN:
-            failed_indices.append(idx)
+            failed_count += 1
         elif response == PROHIBITED_CONTENT_TOKEN:
-            prohibited_content_indices.append(idx)
+            prohibited_content_count += 1
         elif required_str is not None and required_str not in response:
-            required_str_not_found_indices.append(idx)
+            required_str_not_found_count += 1
 
-    notify_params = {"output_path": output_path, "model_name": model_name}
-
-    if len(failed_indices) > 0:
+    if failed_count + prohibited_content_count + required_str_not_found_count > 0:
         slack_notify(
-            f"Failed to generate for examples at these indices: {failed_indices}",
-            **notify_params,
-        )
-
-    if len(prohibited_content_indices) > 0:
-        slack_notify(
-            f"Generate request was blocked due to PROHIBITED_CONTENT for examples at these indices: {prohibited_content_indices}",
-            **notify_params,
-        )
-
-    if len(required_str_not_found_indices) > 0:
-        slack_notify(
-            f"Required string '{required_str}' not found for examples at these indices: {required_str_not_found_indices}",
-            **notify_params,
+            f"Response API generation failure occurred. Manual check needed.",
+            output_path=output_path,
+            model_name=model_name,
+            failed_token=failed_count,
+            prohibited_content=prohibited_content_count,
+            required_str_not_found=required_str_not_found_count,
         )
