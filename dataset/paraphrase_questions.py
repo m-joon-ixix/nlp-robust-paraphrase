@@ -29,7 +29,7 @@ def main(args):
         last_chunk_num = args.chunk_num
     else:
         start_chunk_num = check_next_chunk(args)
-        last_chunk_num = int((len(origin_data_list) - 1) / CHUNK_SIZE)  # inclusive
+        last_chunk_num = _get_last_chunk_num(len(origin_data_list))
 
     if start_chunk_num > last_chunk_num:
         print("Paraphrasing questions is finished. Terminating...")
@@ -55,12 +55,14 @@ def main(args):
 
         run_chunk(data_list, args, filepath)
 
-    merge_chunks(args.dataset, list(range(last_chunk_num + 1)))
-    slack_notify(
-        "Finished paraphrasing questions.",
-        dataset=args.dataset.value,
-        model=args.model_name,
-    )
+    merge_chunks(args.dataset)
+
+    if args.chunk_num is None:
+        slack_notify(
+            "Finished paraphrasing questions.",
+            dataset=args.dataset.value,
+            model=args.model_name,
+        )
 
 
 def run_chunk(data_list, args, filepath):
@@ -88,12 +90,22 @@ def run_chunk(data_list, args, filepath):
     dump_to_json(filepath, data_list)
 
 
-def merge_chunks(dataset: Dataset, chunk_nums: list):
+def merge_chunks(dataset: Dataset):
+    dataset_size = sum(
+        data["dataset"] == dataset.value
+        for data in load_from_json("./output/dataset/origin.json")
+    )
+
     data_list = []
-    for chunk_num in tqdm(chunk_nums, desc=f"Merging chunks ({dataset.value})"):
-        data_list.extend(
-            load_from_json(output_filepath(dataset, chunk_num), print_msg=False)
-        )
+    for chunk_num in tqdm(
+        range(_get_last_chunk_num(dataset_size) + 1), desc=f"Merging chunks"
+    ):
+        filepath = output_filepath(dataset, chunk_num)
+        if not os.path.exists(filepath):
+            print(f"{filepath} does not exist. Stop merging chunks.")
+            return
+
+        data_list.extend(load_from_json(filepath, print_msg=False))
 
     dump_to_json(f"./output/dataset/{dataset.value}/paraphrased.json", data_list)
 
@@ -149,6 +161,10 @@ def check_next_chunk(args) -> int:
             return next_chunk
 
         next_chunk += 1
+
+
+def _get_last_chunk_num(dataset_size: int) -> int:
+    return int((dataset_size - 1) / CHUNK_SIZE)  # inclusive
 
 
 def output_filepath(dataset: Dataset, chunk_num: int) -> str:
