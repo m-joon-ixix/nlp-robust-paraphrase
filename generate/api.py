@@ -124,6 +124,7 @@ def _query_snowflake(
                 prompt=query,
                 options={"max_tokens": max_tokens, "temperature": temperature},
                 session=session,
+                timeout=60,
             )
 
             time.sleep(1)  # sleep to not impose high throughput
