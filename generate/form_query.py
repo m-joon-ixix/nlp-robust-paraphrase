@@ -20,25 +20,46 @@ def form_query(user_prompt: str, model_family: ModelFamily, system_prompt: str =
         return [{"role": "user", "content": user_prompt}]
 
 
-def form_multichoice_queries(data_list: List[dict], model_family: ModelFamily):
+def form_multichoice_queries(
+    data_list: List[dict],
+    question_key: str,
+    model_family: ModelFamily,
+    sample_size: int = None,
+):
     query_list = []
     with open(f"./instruction/multi_choice_query.txt", encoding="utf-8") as f:
-        instruction = "".join(f.readlines())
+        instruction_template = "".join(f.readlines())
 
     for data in tqdm(data_list, desc="Forming Multichoice Queries..."):
-        query = "### Question:\n" + data["question"] + "\n### Options:\n"
-        for i in range(len(data["options"])):
-            query += f"{IDX_TO_LETTER[i]}. {data['options'][i]}\n"
+        _sample_size = sample_size if sample_size else len(data["sampled_idxs_list"])
 
-        query += instruction
-        query_list.append(form_query(query, model_family))
+        for i in range(_sample_size):
+            prompt = instruction_template.format(
+                question=data["question"][question_key],
+                choices="\n".join(
+                    [
+                        form_single_option(data["options"], option_idx, letter_idx)
+                        for letter_idx, option_idx in enumerate(
+                            data["sampled_idxs_list"][i]
+                        )
+                    ]
+                ),
+            )
 
+            query_list.append(form_query(prompt, model_family))
+
+    print(f"{len(query_list)} queries formed from {len(data_list)} data examples.")
     return query_list
 
 
-def form_single_option(options: List[str], idx: int) -> str:
+def form_single_option(
+    options: List[str], option_idx: int, letter_idx: int = None
+) -> str:
+    if letter_idx is None:
+        letter_idx = option_idx
+
     # e.g., "B. Clayton Kershaw"
-    return IDX_TO_LETTER[idx] + ". " + options[idx]
+    return IDX_TO_LETTER[letter_idx] + ". " + options[option_idx]
 
 
 def build_finetune_content(text: str) -> list:
