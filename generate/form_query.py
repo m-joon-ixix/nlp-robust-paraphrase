@@ -17,7 +17,7 @@ def form_query(user_prompt: str, model_family: ModelFamily, system_prompt: str =
         ]
     else:
         # Open Source
-        return [{"role": "user", "content": [{"type": "text", "text": user_prompt}]}]
+        return [{"role": "user", "content": user_prompt}]
 
 
 def form_multichoice_queries(data_list: List[dict], model_family: ModelFamily):
