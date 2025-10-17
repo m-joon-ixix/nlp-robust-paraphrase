@@ -19,6 +19,11 @@ OPEN_SRC_MODELS = [
     "mistralai/Mistral-Small-24B-Instruct-2501",
 ]
 
+PARAPHRASE_MODEL_MAP = {
+    "gemini": "gemini-2.5-flash-lite",
+    "claude": "claude-3-5-sonnet",
+}
+
 # RPD: Requests Per Day
 MODEL_TO_RPD_LIMIT = {
     "gemini-2.5-flash-lite": 1000,

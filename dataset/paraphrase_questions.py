@@ -7,7 +7,12 @@ from tqdm import tqdm
 from generate.api import batch_query_api, check_generate_failure, get_api_keys
 from generate.form_query import form_query, form_single_option
 from common.const import Dataset, FAILED_TOKEN
-from common.model_utils import ModelFamily, get_model_family, MODEL_TO_RPD_LIMIT
+from common.model_utils import (
+    ModelFamily,
+    get_model_family,
+    PARAPHRASE_MODEL_MAP,
+    MODEL_TO_RPD_LIMIT,
+)
 from common.string_utils import load_instruction
 from common.json_utils import load_from_json, dump_to_json
 from common.slack_utils import slack_notify
@@ -35,13 +40,14 @@ def main(args):
         print("Paraphrasing questions is finished. Terminating...")
         return
 
+    model_name = PARAPHRASE_MODEL_MAP[args.model_key]
     print(
-        f"Dataset: {args.dataset.value} (len: {len(origin_data_list)}), Model: {args.model_name}, Chunk Numbers to run: {start_chunk_num}-{last_chunk_num}"
+        f"Dataset: {args.dataset.value} (len: {len(origin_data_list)}), Model: {model_name}, Chunk Numbers to run: {start_chunk_num}-{last_chunk_num}"
     )
 
-    api_usage_limit = daily_api_usage_limit(args.model_name)
+    api_usage_limit = daily_api_usage_limit(model_name)
     for chunk_num in range(start_chunk_num, last_chunk_num + 1):
-        if get_api_usage_today(args.model_name) + CHUNK_SIZE > api_usage_limit:
+        if get_api_usage_today(model_name) + CHUNK_SIZE > api_usage_limit:
             wait_until_tomorrow()
 
         filepath = output_filepath(args.dataset, chunk_num)
@@ -61,31 +67,33 @@ def main(args):
         slack_notify(
             "Finished paraphrasing questions.",
             dataset=args.dataset.value,
-            model=args.model_name,
+            model=model_name,
         )
 
 
 def run_chunk(data_list, args, filepath):
+    model_name = PARAPHRASE_MODEL_MAP[args.model_key]
+
     # NOTE: only query API for data examples that do not have the paraphrased question
     original_idxs = [
         i
         for i, data in enumerate(data_list)
-        if not _paraphrased_question_exists(data, args.model_name)
+        if not _paraphrased_question_exists(data, args.model_key)
     ]
 
     query_list = build_query_list(
-        [data_list[i] for i in original_idxs], get_model_family(args.model_name)
+        [data_list[i] for i in original_idxs], get_model_family(model_name)
     )
-    responses = batch_query_api(query_list, args.model_name)
-    increment_api_usage_today(args.model_name, len(query_list))
+    responses = batch_query_api(query_list, model_name)
+    increment_api_usage_today(model_name, len(query_list))
 
     check_generate_failure(
-        responses, args.model_name, filepath, required_str="New Question:"
+        responses, model_name, filepath, required_str="New Question:"
     )
 
     for i, raw_response in zip(original_idxs, responses):
         paraphrased_question = raw_response.split("New Question:")[-1].strip()
-        data_list[i]["question"][args.model_name] = paraphrased_question
+        data_list[i]["question"][args.model_key] = paraphrased_question
 
     dump_to_json(filepath, data_list)
 
@@ -110,8 +118,8 @@ def merge_chunks(dataset: Dataset):
     dump_to_json(f"./output/dataset/{dataset.value}/paraphrased.json", data_list)
 
 
-def _paraphrased_question_exists(data: dict, model_name: str) -> bool:
-    result = data["question"].get(model_name)
+def _paraphrased_question_exists(data: dict, model_key: str) -> bool:
+    result = data["question"].get(model_key)
     return result is not None and len(result) > 0 and result != FAILED_TOKEN
 
 
@@ -155,7 +163,7 @@ def check_next_chunk(args) -> int:
             return next_chunk
 
         if (
-            args.model_name
+            args.model_key
             not in load_from_json(filepath, print_msg=False)[-1]["question"]
         ):
             return next_chunk
@@ -233,7 +241,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--dataset", type=Dataset)
     parser.add_argument(
-        "--model-name", type=str, choices=list(MODEL_TO_RPD_LIMIT.keys())
+        "--model-key", type=str, choices=list(PARAPHRASE_MODEL_MAP.keys())
     )
     parser.add_argument(
         "--chunk-num",
