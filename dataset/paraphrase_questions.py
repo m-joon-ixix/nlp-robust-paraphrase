@@ -113,14 +113,28 @@ def merge_chunks(dataset: Dataset):
             print(f"{filepath} does not exist. Stop merging chunks.")
             return
 
-        data_list.extend(load_from_json(filepath, print_msg=False))
+        _data_list = [
+            data
+            for data in load_from_json(filepath, print_msg=False)
+            if not _paraphrase_refusal_exists(data)
+        ]
+        data_list.extend(_data_list)
 
+    print(f"{dataset.value} merged (before: {dataset_size}, after: {len(data_list)})")
     dump_to_json(f"./output/dataset/{dataset.value}/paraphrased.json", data_list)
 
 
 def _paraphrased_question_exists(data: dict, model_key: str) -> bool:
     result = data["question"].get(model_key)
     return result is not None and len(result) > 0 and result != FAILED_TOKEN
+
+
+def _paraphrase_refusal_exists(data: dict) -> bool:
+    for para_question in data["question"].values():
+        if para_question.startswith("I apologize, but I cannot assist with "):
+            return True
+
+    return False
 
 
 def build_query_list(data_list: list, model_family: ModelFamily) -> list:
