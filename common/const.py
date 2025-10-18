@@ -13,6 +13,9 @@ class Dataset(Enum):
     COMMONSENSE_QA = "commonsense_qa"
     MATH_QA = "math_qa"
 
+    def is_reasoning_necessary(self) -> bool:
+        return self in [Dataset.MATH_QA]
+
 
 ## Indexing
 IDX_TO_LETTER = [

@@ -5,7 +5,9 @@ from common.const import FAILED_TOKEN, IDX_TO_LETTER, LETTER_TO_IDX
 
 def extract_multichoice_response(response: str, num_options: int):
     response = response.strip()
-    response = response.split("Answer:")[-1].split("Reasoning:")[0].strip()
+    response = response.split("Answer:")[-1].strip()
+    if "Reasoning:" in response:
+        response = response.split("Reasoning:")[0].strip()
 
     # pattern differs by the number of options. If there are 4 options, it looks for A-D
     # match a single uppercase letter that is not preceded by any letter/digit and followed by a dot

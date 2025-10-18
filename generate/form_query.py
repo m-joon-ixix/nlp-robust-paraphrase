@@ -25,9 +25,11 @@ def form_multichoice_queries(
     question_key: str,
     model_family: ModelFamily,
     sample_size: int = None,
+    reasoning: bool = False,
 ):
     query_list = []
-    with open(f"./instruction/multi_choice_query.txt", encoding="utf-8") as f:
+    inst_file = "multi_choice_query_reasoning" if reasoning else "multi_choice_query"
+    with open(f"./instruction/{inst_file}.txt", encoding="utf-8") as f:
         instruction_template = "".join(f.readlines())
 
     for data in tqdm(data_list, desc="Forming Multichoice Queries..."):

@@ -42,6 +42,7 @@ def generate_answers(question_key: str, args):
         question_key,
         get_model_family(DATA_SELECTION_MODEL_NAME),
         args.sample_size,
+        reasoning=args.dataset.is_reasoning_necessary(),
     )
 
     responses = batch_query_open_src(
