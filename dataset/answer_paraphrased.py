@@ -15,11 +15,14 @@ DATA_SELECTION_MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
 
 
 def main(args):
+    print("Running with the following arguments:")
+    print(vars(args))
+
     random.seed(get_seed())
 
     data_list = load_output(args)
     if any("sampled_idxs_list" not in data for data in data_list):
-        add_sampled_idxs(data_list, args.sample_size)
+        add_sampled_idxs(data_list, args)
 
     for question_key in ["original"] + list(PARAPHRASE_MODEL_MAP.keys()):
         generate_answers(question_key, args)
@@ -72,10 +75,10 @@ def generate_answers(question_key: str, args):
     save_output(data_list, args)
 
 
-def add_sampled_idxs(data_list: list, sample_size: int):
+def add_sampled_idxs(data_list: list, args):
     for data in data_list:
         data["sampled_idxs_list"] = get_unique_permutations(
-            len(data["options"]), sample_size
+            len(data["options"]), args.sample_size
         )
 
     save_output(data_list, args)
