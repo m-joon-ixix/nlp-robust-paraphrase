@@ -5,7 +5,6 @@ class ModelFamily(Enum):
     # proprietary
     GEMINI = "gemini"
     SNOWFLAKE = "snowflake"
-    OPENAI = "openai"
     # open source
     LLAMA = "llama"
 

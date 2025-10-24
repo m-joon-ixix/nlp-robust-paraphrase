@@ -143,9 +143,7 @@ def print_prompt_example(prompt, model_name: str):
 
     model_family = get_model_family(model_name)
     # check the `if`, `elif` statements in the method `form_query()` for each case
-    if model_family == ModelFamily.OPENAI:
-        print(prompt[0]["content"][0]["text"])
-    elif model_family == ModelFamily.GEMINI:
+    if model_family == ModelFamily.GEMINI:
         print(prompt[0]["parts"][0]["text"])
     elif model_family == ModelFamily.SNOWFLAKE:
         print(f"# System\n{prompt[0]['content']}\n\n# User\n{prompt[1]['content']}")

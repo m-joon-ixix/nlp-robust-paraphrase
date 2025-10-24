@@ -6,9 +6,7 @@ from common.model_utils import ModelFamily
 
 
 def form_query(user_prompt: str, model_family: ModelFamily, system_prompt: str = None):
-    if model_family == ModelFamily.OPENAI:
-        return [{"role": "user", "content": [{"type": "text", "text": user_prompt}]}]
-    elif model_family == ModelFamily.GEMINI:
+    if model_family == ModelFamily.GEMINI:
         return [{"role": "user", "parts": [{"text": user_prompt}]}]
     elif model_family == ModelFamily.SNOWFLAKE:
         return [
