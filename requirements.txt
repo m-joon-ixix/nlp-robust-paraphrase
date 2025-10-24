@@ -7,7 +7,9 @@ google-genai
 matplotlib
 peft
 pyarrow==20.0.0
+tiktoken==0.8.0
 torch==2.5.1  # 2.5.1+cu121
 trl
 tqdm
 transformers
+vllm==0.6.6.post1

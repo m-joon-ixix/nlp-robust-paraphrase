@@ -15,7 +15,8 @@ def form_query(user_prompt: str, model_family: ModelFamily, system_prompt: str =
         ]
     else:
         # Open Source
-        return [{"role": "user", "content": user_prompt}]
+        # return [{"role": "user", "content": user_prompt}]
+        return user_prompt  # for vLLM
 
 
 def form_multichoice_queries(
