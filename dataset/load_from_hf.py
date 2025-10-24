@@ -1,13 +1,12 @@
 from time import time
 from datasets import load_dataset
 
-from common.const import HF_DATASET_REPO_ID, DATASET_CACHE_DIR
+from common.const import HF_DATASET_REPO_ID, DATASET_CACHE_DIR, SUBSETS
 from common.json_utils import dump_to_json
-from dataset.upload_hf import SUBSET_TO_DATASETS
 
 
 def main():
-    for subset in SUBSET_TO_DATASETS.keys():
+    for subset in SUBSETS:
         dataset_dict = load_dataset(
             HF_DATASET_REPO_ID, subset, cache_dir=DATASET_CACHE_DIR
         )

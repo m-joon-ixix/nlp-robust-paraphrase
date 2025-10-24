@@ -20,7 +20,7 @@ def form_query(user_prompt: str, model_family: ModelFamily, system_prompt: str =
 
 def form_multichoice_queries(
     data_list: List[dict],
-    question_key: str,
+    question_key: str | int,
     model_family: ModelFamily,
     sample_size: int = None,
     reasoning: bool = False,

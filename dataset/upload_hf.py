@@ -19,7 +19,7 @@ SUBSET_TO_DATASETS = {
 
 def main():
     for subset, datasets in SUBSET_TO_DATASETS.items():
-        split_to_data_list = {split: [] for split in SPLITS}
+        split_to_data_list = {split: [] for split in (SPLITS + ["validation"])}
 
         for dataset in datasets:
             data_list = load_from_json(
