@@ -5,6 +5,10 @@ from enum import Enum
 DATASET_CACHE_DIR = os.path.expanduser("~/hf/datasets")
 MODEL_CACHE_DIR = os.path.expanduser("~/hf/hub")
 
+## Constants
+HF_DATASET_REPO_ID = "m-joon-ixix/RoParQ"
+SPLITS = ["train", "validation", "test"]
+
 
 ## Enums
 class Dataset(Enum):

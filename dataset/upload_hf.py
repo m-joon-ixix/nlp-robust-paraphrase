@@ -8,15 +8,13 @@ from datasets import Dataset, DatasetDict
 
 from common.json_utils import load_from_json
 from common.secret_utils import load_secret
-from common.const import Dataset as MyDataset
+from common.const import Dataset as MyDataset, SPLITS, HF_DATASET_REPO_ID
 from common.random_utils import get_seed
 
-HF_REPO_ID = "m-joon-ixix/RoParQ"
 SUBSET_TO_DATASETS = {
     "general-knowledge": [MyDataset.MMLU, MyDataset.ARC, MyDataset.COMMONSENSE_QA],
     "math-reasoning": [MyDataset.MATH_QA],
 }
-SPLITS = ["train", "validation", "test"]
 
 
 def main():
@@ -50,7 +48,7 @@ def print_dataset_info(subset: str, split_to_dataset: Dict[str, Dataset]):
 
 def upload_to_hf(dataset_dict: DatasetDict, subset: str):
     dataset_dict.push_to_hub(
-        HF_REPO_ID, token=load_secret("hf_key"), config_name=subset
+        HF_DATASET_REPO_ID, token=load_secret("hf_key"), config_name=subset
     )
     print(f"Finished uploading subset '{subset}' to HuggingFace!")
 
