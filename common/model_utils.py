@@ -7,6 +7,8 @@ class ModelFamily(Enum):
     SNOWFLAKE = "snowflake"
     # open source
     LLAMA = "llama"
+    QWEN = "qwen"
+    MISTRAL = "mistral"
 
 
 OPEN_SRC_MODELS = [
@@ -37,5 +39,13 @@ def get_model_family(model_name: str) -> ModelFamily:
         return ModelFamily.GEMINI
     elif "llama" in model_name.lower():
         return ModelFamily.LLAMA
+    elif "qwen" in model_name.lower():
+        return ModelFamily.QWEN
+    elif "mistral" in model_name.lower():
+        return ModelFamily.MISTRAL
     else:
         raise ValueError(f"Unsupported model name: {model_name}")
+
+
+def model_name_to_dirname(model_name: str) -> str:
+    return model_name.split("/")[-1].lower()
