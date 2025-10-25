@@ -32,10 +32,12 @@ def form_multichoice_queries(
 
     for data in tqdm(data_list, desc="Forming Multichoice Queries..."):
         _sample_size = sample_size if sample_size else len(data["sampled_idxs_list"])
+        # NOTE: the attr name differs before & after constructing HF dataset
+        question_attr = "questions" if "questions" in data else "question"
 
         for i in range(_sample_size):
             prompt = instruction_template.format(
-                question=data["question"][question_key],
+                question=data[question_attr][question_key],
                 choices="\n".join(
                     [
                         form_single_option(data["options"], option_idx, letter_idx)

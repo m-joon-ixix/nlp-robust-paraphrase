@@ -23,9 +23,11 @@ def batch_query_open_src(
     generate_kwargs = get_generate_kwargs(tokenizer, max_new_tokens, temperature)
     print(f"Generate KwArgs: {generate_kwargs}")
 
-    print(f"An example of prompt (image part is not printed):")
+    print(f"An example of prompt:")
+    print("-" * 100)
     # check the `else` statement in the method `form_query()`
     print(query_list[0][-1]["content"])
+    print("-" * 100)
 
     responses = []
     with torch.no_grad():
