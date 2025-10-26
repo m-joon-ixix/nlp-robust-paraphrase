@@ -22,6 +22,7 @@ def main(args):
 
 
 def generate_for_single_question(args, question_idx: int):
+    print(">" * 10, f"Start generating responses for question {question_idx}", "<" * 10)
     data_list = load_data_list(args)
     sample_size = get_sample_size(data_list)
 
