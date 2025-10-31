@@ -8,7 +8,7 @@ MODEL_CACHE_DIR = os.path.expanduser("~/hf/hub")
 ## Constants
 HF_DATASET_REPO_ID = "m-joon-ixix/RoParQ"
 SUBSETS = ["general-knowledge", "math-reasoning"]
-SPLITS = ["train", "test"]
+SPLITS = ["train", "validation", "test"]
 
 
 ## Enums

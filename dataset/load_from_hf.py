@@ -1,7 +1,7 @@
 from time import time
 from datasets import load_dataset
 
-from common.const import HF_DATASET_REPO_ID, DATASET_CACHE_DIR, SUBSETS
+from common.const import HF_DATASET_REPO_ID, DATASET_CACHE_DIR, SUBSETS, SPLITS
 from common.json_utils import dump_to_json
 
 
@@ -11,13 +11,10 @@ def main():
             HF_DATASET_REPO_ID, subset, cache_dir=DATASET_CACHE_DIR
         )
 
-        train_data_list = dataset_dict["train"].to_list()
-        dump_to_json(f"./output/{subset}/dataset/train.json", train_data_list)
-
-        test_data_list = (
-            dataset_dict["validation"].to_list() + dataset_dict["test"].to_list()
-        )
-        dump_to_json(f"./output/{subset}/dataset/test.json", test_data_list)
+        for split in SPLITS:
+            dump_to_json(
+                f"./output/{subset}/dataset/{split}.json", dataset_dict[split].to_list()
+            )
 
 
 if __name__ == "__main__":
