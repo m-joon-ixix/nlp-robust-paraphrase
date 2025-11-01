@@ -1,7 +1,8 @@
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from typing import List
+from peft import PeftModel
+from typing import List, Optional
 
 from common.const import MODEL_CACHE_DIR
 from common.model_utils import ModelFamily
@@ -15,8 +16,9 @@ def batch_query_open_src(
     max_new_tokens: int = 1024,
     temperature: float = 0.0,
     batch_size: int = 8,
+    peft_dir: Optional[str] = None,
 ) -> List[str]:
-    model = get_model(model_name)
+    model = get_model(model_name, peft_dir=peft_dir)
     tokenizer = get_tokenizer(model_name)
     model.eval()
 
@@ -28,6 +30,9 @@ def batch_query_open_src(
     # check the `else` statement in the method `form_query()`
     print(query_list[0][-1]["content"])
     print("-" * 100)
+
+    if peft_dir:
+        print(f"Using adapters from peft_dir: {peft_dir}")
 
     responses = []
     with torch.no_grad():
@@ -53,19 +58,7 @@ def batch_query_open_src(
     return responses
 
 
-# TODO: remove. for test
-def build_query_list():
-    prompts = [
-        "What is name of the 45th President of the United States?",
-        "What team does Max Scherzer play for?",
-        "Where is the capital of Korea? Only give the answer to the question.",
-        "What do you think about the future of mobility industry?",
-    ]
-
-    return [form_query(prompt, ModelFamily.LLAMA) for prompt in prompts]
-
-
-def get_model(model_name: str):
+def get_model(model_name: str, peft_dir: Optional[str] = None):
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_compute_dtype=torch.bfloat16,
@@ -74,7 +67,7 @@ def get_model(model_name: str):
         bnb_4bit_quant_storage=torch.bfloat16,
     )
 
-    return AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         model_name,
         device_map="auto",
         dtype=torch.bfloat16,
@@ -82,6 +75,11 @@ def get_model(model_name: str):
         attn_implementation="flash_attention_2",
         **_hf_loading_kwargs(),
     )
+
+    if peft_dir is None:
+        return model
+    else:
+        return PeftModel.from_pretrained(model, peft_dir)
 
 
 def get_tokenizer(model_name: str):

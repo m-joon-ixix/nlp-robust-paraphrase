@@ -76,13 +76,17 @@ def _get_training_args(
     training_config["num_train_epochs"] = num_of_epochs
     print(f"Training Set Size: {training_set_size}, Training Epochs: {num_of_epochs}")
 
-    output_dir = f"./training_output/{subset}/{model_name_to_dirname(model_name)}/sft"
+    output_dir = get_training_output_dir(subset, model_name)
 
     return SFTConfig(
         output_dir=output_dir,
         logging_dir=f"{output_dir}/logs",
         **training_config,
     )
+
+
+def get_training_output_dir(subset: str, model_name: str) -> str:
+    return f"./training_output/{subset}/{model_name_to_dirname(model_name)}/sft"
 
 
 def _get_finetune_dataset(args, split: str) -> Dataset:

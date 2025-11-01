@@ -8,6 +8,7 @@ from common.json_utils import load_from_json, dump_to_json
 from generate.form_query import form_multichoice_queries
 from generate.parse_response import extract_multichoice_response, is_response_correct
 from generate.open_src import batch_query_open_src
+from training.sft import get_training_output_dir
 
 
 def main(args):
@@ -31,11 +32,19 @@ def generate_for_single_question(args, question_idx: int):
         question_idx,
         get_model_family(args.model_name),
         sample_size=sample_size,
-        reasoning=(args.subset == "math-reasoning"),
+        reasoning=("reasoning" in args.subset),
+        paraphrase_aware=(args.model_ver == "sft"),
     )
 
     responses = batch_query_open_src(
-        query_list, args.model_name, batch_size=sample_size
+        query_list,
+        args.model_name,
+        batch_size=sample_size,
+        peft_dir=(
+            get_training_output_dir(args.subset, args.model_name)
+            if args.model_ver == "sft"
+            else None
+        ),
     )
 
     data_list = load_data_list(args)  # reload to fetch the latest file
@@ -83,7 +92,7 @@ def get_sample_size(data_list: List[dict]) -> int:
 
 
 def response_filepath(args) -> str:
-    return f"./output/{args.subset}/response/{model_name_to_dirname(args.model_name)}/base/original_{args.split}.json"
+    return f"./output/{args.subset}/response/{model_name_to_dirname(args.model_name)}/{args.model_ver}/original_{args.split}.json"
 
 
 # ex. CUDA_VISIBLE_DEVICES=0 PYTHONPATH=. python run/generate_responses.py --subset general-knowledge --model-name meta-llama/Llama-3.1-8B-Instruct --split test --question-idx 0
@@ -94,6 +103,12 @@ if __name__ == "__main__":
     parser.add_argument("--model-name", type=str, choices=OPEN_SRC_MODELS)
     parser.add_argument("--split", type=str, choices=SPLITS)
     parser.add_argument("--question-idx", type=int, choices=[0, 1, 2], required=False)
+    parser.add_argument(
+        "--model-ver",
+        type=str,
+        default="base",
+        help="Model version (base, sft, etc.)",
+    )
 
     args = parser.parse_args()
     main(args)
