@@ -6,7 +6,8 @@ from common.const import SUBSETS, SPLITS
 from common.model_utils import model_name_to_dirname, models_to_finetune
 from common.json_utils import load_from_json, dump_to_json
 from common.random_utils import get_seed
-from generate.form_query import form_single_option
+from common.string_utils import load_instruction
+from generate.form_query import form_single_option, multichoice_query_inst_filename
 
 METRICS = ["accuracy", "xparacon"]
 
@@ -27,13 +28,11 @@ def main(args):
 
 def construct(subset: str, model_name: str, split: str):
     response_data_list = load_from_json(response_filepath(subset, model_name, split))
-
-    inst_file = "paraphrase_aware_multi_choice_query"
-    if "reasoning" in subset:
-        inst_file += "_reasoning"
-
-    with open(f"./instruction/{inst_file}.txt", encoding="utf-8") as f:
-        inst_template = "".join(f.readlines())
+    inst_template = load_instruction(
+        multichoice_query_inst_filename(
+            reasoning="reasoning" in subset, paraphrase_aware=True
+        )
+    )
 
     data_list = []
     for data in response_data_list:
