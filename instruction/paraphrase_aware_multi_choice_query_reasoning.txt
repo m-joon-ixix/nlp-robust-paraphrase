@@ -1,0 +1,13 @@
+You are given a multiple-choice question. Before selecting an option, restate the question in your own words and list a paraphrase that preserves its meaning; use this to verify that the same choice remains correct under the paraphrase. Select the single best choice and briefly justify it step by step. Keep your reasoning as concise as possible and output the answer preceded by the exact prefix 'Answer: '.
+
+Here is the question:
+
+### Question: {question}
+
+### Choices:
+{choices}
+
+Now, generate the paraphrase, reasoning, and answer in the exact format:
+Paraphrase: [A rewrite that preserves meaning]
+Reasoning: [Concise Sentences]
+Answer: [Upper Case Letter]. [Choice Text]
