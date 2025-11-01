@@ -11,6 +11,9 @@ class ModelFamily(Enum):
     QWEN = "qwen"
     MISTRAL = "mistral"
 
+    def is_open_src(self) -> bool:
+        return self in [ModelFamily.LLAMA, ModelFamily.QWEN, ModelFamily.MISTRAL]
+
 
 OPEN_SRC_MODELS = [
     "meta-llama/Llama-3.1-8B-Instruct",
@@ -19,6 +22,11 @@ OPEN_SRC_MODELS = [
     "Qwen/Qwen3-30B-A3B-Instruct-2507",
     "mistralai/Mistral-7B-Instruct-v0.3",
     "mistralai/Mistral-Small-24B-Instruct-2501",
+]
+
+PROPRIETARY_MODELS = [
+    "gemini-2.5-flash-lite",
+    "claude-3-5-sonnet",
 ]
 
 PARAPHRASE_MODEL_MAP = {

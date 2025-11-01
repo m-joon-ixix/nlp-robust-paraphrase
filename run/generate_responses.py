@@ -3,11 +3,17 @@ import argparse
 from typing import List
 
 from common.const import SUBSETS, SPLITS
-from common.model_utils import OPEN_SRC_MODELS, model_name_to_dirname, get_model_family
+from common.model_utils import (
+    OPEN_SRC_MODELS,
+    PROPRIETARY_MODELS,
+    model_name_to_dirname,
+    get_model_family,
+)
 from common.json_utils import load_from_json, dump_to_json
 from generate.form_query import form_multichoice_queries
 from generate.parse_response import extract_multichoice_response, is_response_correct
 from generate.open_src import batch_query_open_src
+from generate.api import batch_query_api, check_generate_failure
 from training.sft import get_training_output_dir
 
 
@@ -27,25 +33,32 @@ def generate_for_single_question(args, question_idx: int):
     data_list = load_data_list(args)
     sample_size = get_sample_size(data_list)
 
+    model_family = get_model_family(args.model_name)
     query_list = form_multichoice_queries(
         data_list,
         question_idx,
-        get_model_family(args.model_name),
+        model_family,
         sample_size=sample_size,
         reasoning=("reasoning" in args.subset),
         paraphrase_aware=(args.model_ver == "sft"),
     )
 
-    responses = batch_query_open_src(
-        query_list,
-        args.model_name,
-        batch_size=sample_size,
-        peft_dir=(
-            get_training_output_dir(args.subset, args.model_name)
-            if args.model_ver == "sft"
-            else None
-        ),
-    )
+    if model_family.is_open_src():
+        responses = batch_query_open_src(
+            query_list,
+            args.model_name,
+            batch_size=sample_size,
+            peft_dir=(
+                get_training_output_dir(args.subset, args.model_name)
+                if args.model_ver == "sft"
+                else None
+            ),
+        )
+    else:
+        responses = batch_query_api(query_list, args.model_name)
+        check_generate_failure(
+            responses, args.model_name, response_filepath(args), required_str="Answer:"
+        )
 
     data_list = load_data_list(args)  # reload to fetch the latest file
     for i, data in enumerate(data_list):
@@ -100,7 +113,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--subset", type=str, choices=SUBSETS)
-    parser.add_argument("--model-name", type=str, choices=OPEN_SRC_MODELS)
+    parser.add_argument(
+        "--model-name", type=str, choices=OPEN_SRC_MODELS + PROPRIETARY_MODELS
+    )
     parser.add_argument("--split", type=str, choices=SPLITS)
     parser.add_argument("--question-idx", type=int, choices=[0, 1, 2], required=False)
     parser.add_argument(
@@ -111,4 +126,8 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    if args.model_ver == "sft":
+        assert args.model_name in OPEN_SRC_MODELS, "SFT only in open source models"
+
     main(args)

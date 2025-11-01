@@ -3,7 +3,12 @@ import argparse
 import pandas as pd
 
 from common.const import SUBSETS, SPLITS
-from common.model_utils import OPEN_SRC_MODELS, model_name_to_dirname, model_sort_key
+from common.model_utils import (
+    OPEN_SRC_MODELS,
+    PROPRIETARY_MODELS,
+    model_name_to_dirname,
+    model_sort_key,
+)
 from common.json_utils import load_from_json
 from common.pickle_utils import load_from_pickle, dump_to_pickle
 from evaluate.utils import compute_accuracy, compute_xparacon
@@ -16,7 +21,11 @@ def main(args):
     print(vars(args))
 
     subsets = SUBSETS if args.subset is None else [args.subset]
-    model_names = OPEN_SRC_MODELS if args.model_name is None else [args.model_name]
+    model_names = (
+        OPEN_SRC_MODELS + PROPRIETARY_MODELS
+        if args.model_name is None
+        else [args.model_name]
+    )
     splits = SPLITS if args.split is None else [args.split]
 
     for subset in subsets:
@@ -101,7 +110,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--subset", type=str, choices=SUBSETS, required=False)
     parser.add_argument(
-        "--model-name", type=str, choices=OPEN_SRC_MODELS, required=False
+        "--model-name",
+        type=str,
+        choices=OPEN_SRC_MODELS + PROPRIETARY_MODELS,
+        required=False,
     )
     parser.add_argument("--split", type=str, choices=SPLITS, required=False)
     parser.add_argument(

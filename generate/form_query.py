@@ -33,6 +33,12 @@ def form_multichoice_queries(
         )
     )
 
+    system_prompt = (
+        load_instruction("multi_choice_query_system")
+        if model_family == ModelFamily.SNOWFLAKE
+        else None
+    )
+
     query_list = []
     for data in tqdm(data_list, desc="Forming Multichoice Queries..."):
         _sample_size = sample_size if sample_size else len(data["sampled_idxs_list"])
@@ -52,7 +58,9 @@ def form_multichoice_queries(
                 ),
             )
 
-            query_list.append(form_query(prompt, model_family))
+            query_list.append(
+                form_query(prompt, model_family, system_prompt=system_prompt)
+            )
 
     print(f"{len(query_list)} queries formed from {len(data_list)} data examples.")
     return query_list

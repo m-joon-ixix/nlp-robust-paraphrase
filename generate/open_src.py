@@ -5,9 +5,7 @@ from peft import PeftModel
 from typing import List, Optional
 
 from common.const import MODEL_CACHE_DIR
-from common.model_utils import ModelFamily
 from common.secret_utils import load_secret
-from generate.form_query import form_query
 
 
 def batch_query_open_src(
