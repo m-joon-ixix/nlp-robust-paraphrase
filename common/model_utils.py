@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 
 
 class ModelFamily(Enum):
@@ -59,3 +60,12 @@ def model_sort_key(model_name: str):
     )
 
     return (model_family, param_size)
+
+
+def models_to_finetune() -> List[str]:
+    # if model param size is smaller than 10B
+    return [
+        model_name
+        for model_name in OPEN_SRC_MODELS
+        if model_sort_key(model_name)[1] < 10
+    ]

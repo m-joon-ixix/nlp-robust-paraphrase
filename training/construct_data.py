@@ -3,7 +3,7 @@ import random
 from typing import List
 
 from common.const import SUBSETS, SPLITS
-from common.model_utils import OPEN_SRC_MODELS, model_name_to_dirname, model_sort_key
+from common.model_utils import model_name_to_dirname, models_to_finetune
 from common.json_utils import load_from_json, dump_to_json
 from common.random_utils import get_seed
 from generate.form_query import form_single_option
@@ -95,21 +95,12 @@ def build_assistant_response(data: dict, question_idx: int, sample_num: int) -> 
     return f"Paraphrase: {data['questions'][next_question_idx]}\n{data['responses'][question_idx][sample_num]}"
 
 
-def models_to_finetune() -> List[str]:
-    # if model param size is smaller than 10B
-    return [
-        model_name
-        for model_name in OPEN_SRC_MODELS
-        if model_sort_key(model_name)[1] < 10
-    ]
-
-
 def response_filepath(subset: str, model_name: str, split: str) -> str:
     return f"./output/{subset}/response/{model_name_to_dirname(model_name)}/base/original_{split}.json"
 
 
 def training_data_filepath(subset: str, model_name: str, split: str) -> str:
-    return f"./output/{subset}/training_data/{model_name_to_dirname(model_name)}/{split}.pkl"
+    return f"./output/{subset}/training_data/{model_name_to_dirname(model_name)}/{split}.json"
 
 
 # ex. PYTHONPATH=. python training/construct_data.py --subset general-knowledge --model-name meta-llama/Llama-3.1-8B-Instruct
