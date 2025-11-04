@@ -27,6 +27,7 @@ OPEN_SRC_MODELS = [
 PROPRIETARY_MODELS = [
     "gemini-2.5-flash-lite",
     "claude-3-5-sonnet",
+    "llama3.1-405b",  # accessed via Snowflake API
 ]
 
 PARAPHRASE_MODEL_MAP = {
@@ -46,6 +47,8 @@ def get_model_family(model_name: str) -> ModelFamily:
         return ModelFamily.SNOWFLAKE
     elif "gemini" in model_name.lower():
         return ModelFamily.GEMINI
+    elif model_name in PROPRIETARY_MODELS:
+        return ModelFamily.SNOWFLAKE
     elif "llama" in model_name.lower():
         return ModelFamily.LLAMA
     elif "qwen" in model_name.lower():

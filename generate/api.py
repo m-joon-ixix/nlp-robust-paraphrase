@@ -14,7 +14,7 @@ from common.random_utils import get_seed
 from common.secret_utils import load_secret
 from common.slack_utils import slack_notify
 
-RETRY_INTERVAL = 3
+RETRY_INTERVAL = 10
 
 SNOWFLAKE_CONFIG_KEYS = [
     "account",
@@ -70,7 +70,7 @@ def _query_gemini(query, model_name: str, max_tokens: int, temperature: float) -
     clients = [genai.Client(api_key=api_key) for api_key in api_keys]
     client_idx = random.randint(0, len(clients) - 1)
 
-    retry_count = max(len(clients), 3)
+    retry_count = max(len(clients), 10)
     for _ in range(retry_count):
         try:
             client = clients[client_idx]

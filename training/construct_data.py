@@ -9,8 +9,6 @@ from common.random_utils import get_seed
 from common.string_utils import load_instruction
 from generate.form_query import form_single_option, multichoice_query_inst_filename
 
-METRICS = ["accuracy", "xparacon"]
-
 
 def main(args):
     print("Running with the following arguments:")
