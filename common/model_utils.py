@@ -67,9 +67,13 @@ def model_name_to_dirname(model_name: str) -> str:
 # To use as sorting key in: `sorted([...], key=model_sort_key)`
 def model_sort_key(model_name: str):
     model_family = model_name.split("-")[0]
-    param_size = int(
-        [s for s in model_name.split("-") if s.endswith("B")][0].replace("B", "")
-    )
+
+    try:
+        param_size = int(
+            [s for s in model_name.split("-") if s.endswith("B")][0].replace("B", "")
+        )
+    except:
+        param_size = 0
 
     return (model_family, param_size)
 

@@ -8,6 +8,7 @@ from common.model_utils import (
     PROPRIETARY_MODELS,
     model_name_to_dirname,
     model_sort_key,
+    models_to_finetune,
 )
 from common.json_utils import load_from_json
 from common.pickle_utils import load_from_pickle, dump_to_pickle
@@ -22,7 +23,7 @@ def main(args):
 
     subsets = SUBSETS if args.subset is None else [args.subset]
     model_names = (
-        OPEN_SRC_MODELS + PROPRIETARY_MODELS
+        _get_all_models_for_eval(args.model_ver)
         if args.model_name is None
         else [args.model_name]
     )
@@ -104,6 +105,13 @@ def stat_df_index_name(model_name: str, model_ver: str) -> str:
         return model_name + "_" + model_ver
 
 
+def _get_all_models_for_eval(model_ver: str) -> list:
+    if model_ver == "sft":
+        return models_to_finetune()
+    else:
+        return OPEN_SRC_MODELS + PROPRIETARY_MODELS
+
+
 # ex. PYTHONPATH=. python evaluate/run_eval.py --subset general-knowledge --model-name meta-llama/Llama-3.1-8B-Instruct --split test
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -120,7 +128,7 @@ if __name__ == "__main__":
         "--model-ver",
         type=str,
         default="base",
-        help="Model version (base, finetuned, etc.)",
+        help="Model version (base, sft, etc.)",
     )
 
     args = parser.parse_args()
