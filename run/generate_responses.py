@@ -56,9 +56,7 @@ def generate_for_single_question(args, question_idx: int):
         )
     else:
         responses = batch_query_api(query_list, args.model_name)
-        check_generate_failure(
-            responses, args.model_name, response_filepath(args), required_str="Answer:"
-        )
+        check_generate_failure(responses, args.model_name, response_filepath(args))
 
     data_list = load_data_list(args)  # reload to fetch the latest file
     for i, data in enumerate(data_list):
