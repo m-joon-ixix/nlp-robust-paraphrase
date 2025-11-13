@@ -116,7 +116,7 @@ def _query_gemini(query, model_name: str, max_tokens: int, temperature: float) -
 def _query_snowflake(
     query, model_name: str, max_tokens: int, temperature: float, session: Session
 ) -> str:
-    retry_count = 3
+    retry_count = 10
     for _ in range(retry_count):
         try:
             response = complete(

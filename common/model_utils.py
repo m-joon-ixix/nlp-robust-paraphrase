@@ -28,6 +28,7 @@ PROPRIETARY_MODELS = [
     "gemini-2.5-flash-lite",
     "claude-3-5-sonnet",
     "llama3.1-405b",  # accessed via Snowflake API
+    "deepseek-r1",
 ]
 
 PARAPHRASE_MODEL_MAP = {
