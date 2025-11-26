@@ -98,7 +98,17 @@ def load_stat_df(subset: str, split: str) -> str:
 
 
 def stat_df_index_name(model_name: str, model_ver: str) -> str:
+    if model_name == "llama3.1-405b":
+        model_name = "Llama-3.1-405B"
+
     model_name = model_name.split("/")[-1]
+    model_name = "-".join(
+        [
+            word if word[0] == "v" else word[0].upper() + word[1:]
+            for word in model_name.split("-")
+        ]
+    )
+
     if model_ver == "base":
         return model_name
     else:
